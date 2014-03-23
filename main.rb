@@ -39,6 +39,10 @@ module DotMatrix
       @objects[id]
     end
 
+    def all
+      @objects
+    end
+    
     def save obj
       @id += 1
       obj.id = @id
@@ -135,7 +139,8 @@ module DotMatrix
   ##########################################################################
 
   class Server < Sinatra::Base
-    
+    enable :inline_templates
+
     class ParameterMissingError < StandardError
       def initialize(key)
         @key = key
@@ -152,6 +157,16 @@ module DotMatrix
     end
 
     get "/" do
+      "<h1>The (Dot-)Matrix</h1>"
+    end
+
+    get "/consultants" do
+      @consultants = @repo.for(Consultant).all
+      haml :consultants
+    end
+
+    get "/consultant" do
+      haml :consultant_form
     end
 
     get "/consultant/:id" do |id|
@@ -199,6 +214,11 @@ module DotMatrix
       assert_match /Foo Bar/, last_response.body
     end
 
+    def test_assign_a_project_to_a_consultant
+      get '/consultants'
+      assert_equal 200, last_response.status
+    end
+
   end
 
 
@@ -241,3 +261,20 @@ module DotMatrix
   end
 end
 
+__END__
+
+@@consultants
+%table
+  - @consultants.each do |c|
+    %tr
+      %td= c.name
+
+@@consultant_form
+%form(method="POST" action="/consultant")
+  -# FIXME use url helper
+  %dl
+    %dt
+      Name
+    %dd
+      %input(name="name")
+  %input(type="submit")
